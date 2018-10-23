@@ -670,7 +670,14 @@ module ActiveRecord
         end
 
         if(@arelVersion >=  3 )
-          @visitor = Arel::Visitors::IBM_DB.new self
+          # This part is copied from postgres adapter to disable prepared statements on ibm_db
+          #  this relates to issue #IC85845 (https://www-01.ibm.com/support/docview.wss?uid=swg1IC85845)
+          if self.class.type_cast_config_to_boolean(config.fetch(:prepared_statements) { true })
+            @prepared_statements = true
+            @visitor = Arel::Visitors::IBM_DB.new self
+          else
+            @visitor = unprepared_visitor
+          end
         end
       end
 
